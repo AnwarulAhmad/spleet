@@ -220,7 +220,7 @@ h2, h3, h4, p, label {
 @media (max-width: 600px) {
     /* 1. Reduce the massive body margins */
     body {
-        margin: 10px;
+        margin: 0;
         padding: 5px;
     }
 
