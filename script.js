@@ -1,140 +1,180 @@
-// Generic function to remove any row
-function removeRow(button) {
-    const row = button.closest('.row');
-    const container = row.parentElement;
-    
-    // Make sure they don't delete the very last person!
-    if (container.children.length > 1) {
-        row.remove();
-    } else {
-        alert("You must have at least one row!");
-    }
+* { box-sizing: border-box; }
+
+body { 
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
+    max-width: 650px; 
+    margin: 40px auto; 
+    padding: 20px; 
+    color: #fff;
+    /* Removed background-image! The WebGL canvas handles the background now. */
 }
 
-function addPerson() {
-    const container = document.getElementById('people-container');
-    const row = document.createElement('div');
-    row.className = 'row person-row';
-    row.innerHTML = `
-        <input type="text" name="names[]" placeholder="Person's Name" required>
-        <input type="number" step="0.01" name="costs[]" placeholder="Item Cost" required>
-        <button type="button" class="btn-remove" onclick="removeRow(this)" title="Remove">X</button>
-    `;
-    container.appendChild(row);
+/* --- THE FULLSCREEN WEBGL CANVAS --- */
+#webgl-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    z-index: -2;
+    pointer-events: none; /* Lets you click through it to your form */
 }
 
-function addTax() {
-    const container = document.getElementById('taxes-container');
-    const row = document.createElement('div');
-    row.className = 'row tax-row';
-    row.innerHTML = `
-        <input type="text" name="tax_names[]" placeholder="Tax Name (e.g. VAT)">
-        <input type="number" step="0.01" name="tax_values[]" placeholder="Amount/Value" value="0" required>
-        <select name="tax_types[]">
-            <option value="amount">Flat Amount</option>
-            <option value="percent">Percentage (%)</option>
-        </select>
-        <button type="button" class="btn-remove" onclick="removeRow(this)" title="Remove">X</button>
-    `;
-    container.appendChild(row);
+/* -------------------------------------- */
+/* LIQUID GLASS CONTAINER                 */
+/* -------------------------------------- */
+.liquid-glass-box {
+    position: relative;
+    border-radius: 32px; 
+    padding: 35px;
+    margin-bottom: 25px;
+    z-index: 1; 
+    
+    /* Make the HTML box completely transparent so the WebGL glass shows through! */
+    background: transparent;
+    
+    /* Specular Highlights (Borders acting as light reflections) */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-top: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-left: 1.5px solid rgba(255, 255, 255, 0.3);
+    
+    /* Shadows for Depth */
+    box-shadow: 
+        0 25px 45px rgba(0, 0, 0, 0.2), 
+        inset 0 0 20px rgba(255, 255, 255, 0.2), 
+        inset 2px 2px 5px rgba(255, 255, 255, 0.3);
 }
 
-// Format numbers as currency with 2 decimals
-function formatMoney(amount) {
-    return Number(amount).toFixed(2);
+/* Removed .liquid-glass-box::before completely! */
+
+/* -------------------------------------- */
+/* Form Elements Styling                  */
+/* -------------------------------------- */
+.row { 
+    margin-bottom: 15px; 
+    display: flex; 
+    gap: 10px; 
+    align-items: center; 
+    width: 100%; 
 }
 
-// Handle the Form Submission and Math
-document.getElementById('bill-form').addEventListener('submit', function(e) {
-    e.preventDefault(); // Stop the page from reloading!
+.row input[type="text"],
+.row input[type="number"],
+.row select {
+    flex: 1;
+    min-width: 0;
+}
 
-    const currency = document.getElementById('currency').value;
-    const tipAmount = parseFloat(document.getElementById('tip-amount').value) || 0;
-    
-    let subtotal = 0;
-    let peopleData = [];
-    
-    // 1. Calculate Subtotal from People
-    const personRows = document.querySelectorAll('.person-row');
-    personRows.forEach(row => {
-        const name = row.querySelector('input[name="names[]"]').value;
-        const cost = parseFloat(row.querySelector('input[name="costs[]"]').value) || 0;
-        
-        if (name && cost > 0) {
-            peopleData.push({ name, cost });
-            subtotal += cost;
-        }
-    });
+input, select { 
+    padding: 12px; 
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid rgba(0, 0, 0, 0.2);
+    border-left: 1px solid rgba(0, 0, 0, 0.2);
+    background: rgba(0, 0, 0, 0.15); 
+    color: #fff;
+    outline: none;
+    font-size: 14px;
+    transition: all 0.3s ease;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
+}
 
-    const resultsContainer = document.getElementById('results-container');
+input::placeholder { color: rgba(255, 255, 255, 0.6); }
 
-    if (subtotal === 0) {
-        resultsContainer.innerHTML = `
-            <div class="liquid-glass-box">
-                <p style="color: #ff4d4d; font-weight: bold;">Please ensure the item costs total more than zero.</p>
-            </div>`;
-        return;
-    }
+input:focus, select:focus {
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 8px rgba(255,255,255,0.2);
+}
 
-    // 2. Calculate Taxes
-    let totalTaxAmount = 0;
-    let activeTaxes = [];
-    
-    const taxRows = document.querySelectorAll('.tax-row');
-    taxRows.forEach((row, index) => {
-        let tName = row.querySelector('input[name="tax_names[]"]').value.trim();
-        const tValue = parseFloat(row.querySelector('input[name="tax_values[]"]').value) || 0;
-        const tType = row.querySelector('select[name="tax_types[]"]').value;
+/* Custom Dropdown */
+select {
+    appearance: none; 
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+    background-repeat: no-repeat;
+    background-position: right 12px top 50%; 
+    background-size: 10px auto; 
+    padding-right: 35px; 
+    cursor: pointer;
+}
 
-        if (tValue > 0) {
-            let calculatedTax = (tType === 'percent') ? (subtotal * (tValue / 100)) : tValue;
-            totalTaxAmount += calculatedTax;
-            
-            let displayName = tName !== "" ? tName : "Tax " + (index + 1);
-            activeTaxes.push({ name: displayName, amount: calculatedTax });
-        }
-    });
+select option {
+    background: #2e2b3d; 
+    color: white;
+    padding: 10px;
+    font-size: 14px;
+}
 
-    // 3. Calculate Ratios
-    const taxRatio = totalTaxAmount / subtotal;
-    const tipRatio = tipAmount / subtotal;
+/* Buttons */
+.btn-add { 
+    padding: 10px 15px; 
+    cursor: pointer; 
+    background: rgba(255, 255, 255, 0.1); 
+    border: 1px solid rgba(255, 255, 255, 0.3); 
+    color: #fff;
+    border-radius: 12px; 
+    font-weight: 500;
+    transition: all 0.2s;
+    backdrop-filter: blur(10px);
+}
+.btn-add:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
 
-    // 4. Generate the HTML Results
-    let resultsHTML = `
-        <div class="liquid-glass-box">
-            <h3>Individual Breakdown</h3>
-            <ul style="list-style: none; padding-left: 0;">
-    `;
+.btn-submit { 
+    padding: 15px 20px; 
+    cursor: pointer; 
+    background: linear-gradient(135deg, rgba(40, 167, 69, 0.8), rgba(30, 126, 52, 0.9));
+    color: white; 
+    border: 1px solid rgba(255, 255, 255, 0.4); 
+    font-size: 16px; 
+    font-weight: bold;
+    border-radius: 16px; 
+    width: 100%; 
+    margin-top: 15px; 
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2), inset 0 1px 2px rgba(255,255,255,0.5);
+    text-shadow: 0 1px 2px rgba(0,0,0,0.3);
+    transition: transform 0.2s;
+}
+.btn-submit:hover { transform: translateY(-2px); }
 
-    peopleData.forEach(person => {
-        const personTax = person.cost * taxRatio;
-        const personTip = person.cost * tipRatio;
-        const totalOwed = person.cost + personTax + personTip;
+.btn-remove {
+    background: rgba(255, 59, 48, 0.3); 
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    border-radius: 10px;
+    width: 40px;
+    height: 40px;
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+    flex-shrink: 0; 
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+}
+.btn-remove:hover { background: rgba(255, 59, 48, 0.7); transform: scale(1.05); }
 
-        resultsHTML += `
-            <li style="margin-bottom: 12px; background: rgba(255,255,255,0.1); padding: 10px; border-radius: 8px;">
-                <strong>${person.name}</strong> pays 
-                <strong style="color: #a8e6cf; font-size: 1.1em;">${currency}${formatMoney(totalOwed)}</strong>
-                <br>
-                <small>(Items: ${currency}${formatMoney(person.cost)} | Taxes: ${currency}${formatMoney(personTax)} | Tip: ${currency}${formatMoney(personTip)})</small>
-            </li>
-        `;
-    });
+hr { 
+    border: 0; height: 1px; 
+    background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
+    margin: 30px 0; 
+}
 
-    resultsHTML += `</ul><hr><h3>Receipt Summary</h3>`;
-    resultsHTML += `<p><strong>Subtotal:</strong> ${currency}${formatMoney(subtotal)}</p>`;
-    
-    activeTaxes.forEach(tax => {
-        resultsHTML += `<p><strong>${tax.name}:</strong> ${currency}${formatMoney(tax.amount)}</p>`;
-    });
-    
-    resultsHTML += `<p><strong>Tip:</strong> ${currency}${formatMoney(tipAmount)}</p>`;
-    
-    const grandTotal = subtotal + totalTaxAmount + tipAmount;
-    resultsHTML += `<h4 style="color: #a8e6cf; font-size: 20px;">Total Bill: ${currency}${formatMoney(grandTotal)}</h4>`;
-    
-    resultsHTML += `</div>`;
+h2, h3, h4, p, label {
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    letter-spacing: 0.5px;
+}
 
-    // 5. Inject Results into the Page
-    resultsContainer.innerHTML = resultsHTML;
-});
+/* Mobile */
+@media (max-width: 600px) {
+    body { margin: 10px; padding: 5px; }
+    .liquid-glass-box { padding: 20px; border-radius: 24px; }
+    .row { flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
+    .row input[type="text"] { flex: 1 1 100%; }
+    .row input[type="number"], .row select { flex: 1 1 40%; }
+    .btn-remove { flex: 0 0 40px; }
+    h2 { font-size: 22px; }
+    h3 { font-size: 18px; }
+}
