@@ -5,9 +5,8 @@ $subtotal = 0;
 $totalTaxAmount = 0;
 $totalTip = 0;
 $currency = '$';
-$activeTaxes = []; // To store the breakdown of calculated taxes
+$activeTaxes = []; 
 
-// Arrays to hold our form data so the form stays "sticky" after clicking calculate
 $peopleInputs = [];
 $taxInputs = [];
 
@@ -15,7 +14,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     $currency = $_POST['currency'] ?? '$';
     $totalTip = floatval($_POST['tip'] ?? 0);
 
-    // 1. Rebuild the People inputs & calculate subtotal
+    // Rebuild People inputs
     $names = $_POST['names'] ?? [];
     $costs = $_POST['costs'] ?? [];
     for ($i = 0; $i < count($costs); $i++) {
@@ -27,7 +26,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         $subtotal += $cost;
     }
 
-    // 2. Rebuild the Tax inputs & calculate total tax amount
+    // Rebuild Tax inputs
     $taxNames = $_POST['tax_names'] ?? [];
     $taxValues = $_POST['tax_values'] ?? [];
     $taxTypes = $_POST['tax_types'] ?? [];
@@ -38,29 +37,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $tValue = floatval($taxValues[$j] ?? 0);
             $tType = $taxTypes[$j] ?? 'amount';
             
-            // Save for the sticky form
             $taxInputs[] = ['name' => $tName, 'value' => $tValue, 'type' => $tType];
 
-            // Calculate this specific tax
-            $calculatedTax = 0;
-            if ($tType === 'percent') {
-                $calculatedTax = $subtotal * ($tValue / 100);
-            } else {
-                $calculatedTax = $tValue;
-            }
-
+            $calculatedTax = ($tType === 'percent') ? ($subtotal * ($tValue / 100)) : $tValue;
             $totalTaxAmount += $calculatedTax;
             
-            // Keep a record for the receipt breakdown
             $displayName = !empty(trim($tName)) ? $tName : "Tax " . ($j + 1);
             $activeTaxes[] = ['name' => $displayName, 'amount' => $calculatedTax];
         }
 
-        // 3. Ratios
+        // Ratios
         $taxRatio = $totalTaxAmount / $subtotal;
         $tipRatio = $totalTip / $subtotal;
 
-        // 4. Calculate exactly what each person owes
+        // Calculate breakdown
         foreach ($peopleInputs as $person) {
             if (!empty($person['name']) && $person['cost'] > 0) {
                 $personTax = $person['cost'] * $taxRatio;
@@ -78,7 +68,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
     }
 } else {
-    // Default empty rows for the first time the page loads
     $peopleInputs = [ ['name' => '', 'cost' => ''], ['name' => '', 'cost' => ''] ];
     $taxInputs = [ ['name' => '', 'value' => '', 'type' => 'amount'] ];
 }
@@ -90,22 +79,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Advanced Bill Splitter</title>
-    <style>
-        body { font-family: sans-serif; max-width: 650px; margin: 40px auto; padding: 20px; }
-        .row { margin-bottom: 15px; display: flex; gap: 10px; align-items: center; }
-        .results-box { background: #f4f4f4; padding: 15px; margin-top: 20px; border-radius: 5px; }
-        input, select { padding: 6px; }
-        .btn-add { padding: 5px 10px; cursor: pointer; background: #e0e0e0; border: 1px solid #ccc; border-radius: 4px; }
-        .btn-submit { padding: 10px 20px; cursor: pointer; background-color: #28a745; color: white; border: none; font-size: 16px; border-radius: 4px; width: 100%; margin-top: 10px; }
-        hr { border: 1px solid #ddd; margin: 25px 0; }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
     <h2>Advanced Fair Bill Splitter</h2>
 
     <form method="POST" action="">
-        
         <div class="row">
             <label><strong>Currency:</strong></label>
             <select name="currency">
@@ -171,9 +151,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     </li>
                 <?php endforeach; ?>
             </ul>
-            
             <hr>
-            
             <h3>Receipt Summary</h3>
             <p><strong>Subtotal:</strong> <?= $currency ?><?= number_format($subtotal, 2) ?></p>
             <?php foreach ($activeTaxes as $at): ?>
@@ -186,33 +164,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         <p style="color: red;">Please ensure the item costs total more than zero.</p>
     <?php endif; ?>
 
-    <script>
-        function addPerson() {
-            const container = document.getElementById('people-container');
-            const row = document.createElement('div');
-            row.className = 'row';
-            row.innerHTML = `
-                <input type="text" name="names[]" placeholder="Person's Name" required>
-                <input type="number" step="0.01" name="costs[]" placeholder="Item Cost" required>
-            `;
-            container.appendChild(row);
-        }
-
-        function addTax() {
-            const container = document.getElementById('taxes-container');
-            const row = document.createElement('div');
-            row.className = 'row';
-            row.innerHTML = `
-                <input type="text" name="tax_names[]" placeholder="Tax Name (e.g. VAT)">
-                <input type="number" step="0.01" name="tax_values[]" placeholder="Amount/Value" required>
-                <select name="tax_types[]">
-                    <option value="amount">Flat Amount</option>
-                    <option value="percent">Percentage (%)</option>
-                </select>
-            `;
-            container.appendChild(row);
-        }
-    </script>
-
+    <script src="script.js"></script>
 </body>
 </html>
