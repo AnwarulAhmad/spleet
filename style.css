@@ -1,42 +1,64 @@
-* { box-sizing: border-box; }
+* {
+    box-sizing: border-box;
+}
 
-/* Update these specific parts of your style.css */
+/* Base Page Styling with a beautiful background to refract */
 body { 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     max-width: 650px; 
     margin: 40px auto; 
     padding: 20px; 
     color: #fff;
-    background: #000; /* WebGL will draw over this */
+    
+    /* A colorful, high-contrast background is REQUIRED to see clear glass properly */
+    background-image: linear-gradient(rgb(0, 0, 0), rgb(26, 22, 29));
 }
 
+/* -------------------------------------- */
+/* CLEAR LIQUID GLASS BOX EFFECT          */
+/* -------------------------------------- */
+
+/* 1. The Container */
 .liquid-glass-box {
     position: relative;
     border-radius: 32px; 
     padding: 35px;
     margin-bottom: 25px;
     z-index: 1; 
-    background: transparent; /* MANDATORY: lets the WebGL refraction show through */
-    border: 1px solid rgba(255, 255, 255, 0.1);
-    border-top: 1.5px solid rgba(255, 255, 255, 0.4);
-    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+    
+    /* CRITICAL: This clips the stretched glass layer so it stays perfectly inside the borders */
+    overflow: hidden;
+    
+    /* Specular Highlights (Borders acting as light reflections) */
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-top: 1.5px solid rgba(255, 255, 255, 0.5);
+    border-left: 1.5px solid rgba(255, 255, 255, 0.3);
+    
+    /* Shadows for Depth */
+    box-shadow: 
+        0 25px 45px rgba(0, 0, 0, 0.2), 
+        inset 0 0 20px rgba(255, 255, 255, 0.2), 
+        inset 2px 2px 5px rgba(255, 255, 255, 0.3);
 }
 
-/* REMOVE OR DISABLE THIS: It was only for the SVG version */
+/* 2. The Glass Background */
 .liquid-glass-box::before {
-    display: none;
+    content: '';
+    position: absolute;
+    /* Stretch outside the box so the heavy distortion doesn't show ugly cut-off edges */
+    top: -40px; left: -40px; right: -40px; bottom: -40px; 
+    z-index: -1; 
+    
+    /* A subtle tint so the glass feels physical */
+    background: rgba(255, 255, 255, 0.03); 
+    
+    /* STEP A: Pull the background image into the box and blur it slightly */
+    backdrop-filter: blur(22px) saturate(180%);
+    -webkit-backdrop-filter: blur(22px) saturate(180%);
+    
+    /* STEP B: Apply the SVG liquid waves to that captured background! */
+    filter: url('#liquid-glass');
 }
-/* --- THE FULLSCREEN WEBGL CANVAS --- */
-#webgl-canvas {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;
-    height: 100vh;
-    z-index: -2;
-    pointer-events: none; /* Lets you click through it to your form */
-}
-
 /* -------------------------------------- */
 /* Form Elements Styling                  */
 /* -------------------------------------- */
@@ -45,9 +67,10 @@ body {
     display: flex; 
     gap: 10px; 
     align-items: center; 
-    width: 100%; 
+    width: 100%; /* FIXED: This lets the row stretch across the whole box */
 }
 
+/* ADD THIS NEW BLOCK: Tells the inputs to share all the empty space evenly */
 .row input[type="text"],
 .row input[type="number"],
 .row select {
@@ -55,6 +78,7 @@ body {
     min-width: 0;
 }
 
+/* Make inputs look like carved glass */
 input, select { 
     padding: 12px; 
     border-radius: 12px;
@@ -69,7 +93,9 @@ input, select {
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.1);
 }
 
-input::placeholder { color: rgba(255, 255, 255, 0.6); }
+input::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
 
 input:focus, select:focus {
     background: rgba(0, 0, 0, 0.3);
@@ -77,27 +103,40 @@ input:focus, select:focus {
     box-shadow: inset 0 2px 4px rgba(0,0,0,0.2), 0 0 8px rgba(255,255,255,0.2);
 }
 
-/* Custom Dropdown */
+/* -------------------------------------- */
+/* CUSTOM DROPDOWN STYLING                */
+/* -------------------------------------- */
+
+/* 1. Style the Select Box */
 select {
+    /* Hide the ugly default browser arrow */
     appearance: none; 
     -webkit-appearance: none;
     -moz-appearance: none;
+        border-radius: 15px;
+
+    /* Add a clean, custom white SVG arrow */
     background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23FFFFFF%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
     background-repeat: no-repeat;
-    background-position: right 12px top 50%; 
-    background-size: 10px auto; 
-    padding-right: 35px; 
+    background-position: right 12px top 50%; /* Position the arrow on the right */
+    background-size: 10px auto; /* Size of the arrow */
+    padding-right: 35px; /* Make room for the new arrow so text doesn't overlap it */
     cursor: pointer;
 }
 
+/* 2. Style the Options Menu */
 select option {
+    /* Gives the opened menu a dark background so white text is readable */
     background: #2e2b3d; 
     color: white;
     padding: 10px;
     font-size: 14px;
+        border-radius: 15px;
+
 }
 
-/* Buttons */
+
+/* Glassy Buttons */
 .btn-add { 
     padding: 10px 15px; 
     cursor: pointer; 
@@ -109,7 +148,11 @@ select option {
     transition: all 0.2s;
     backdrop-filter: blur(10px);
 }
-.btn-add:hover { background: rgba(255, 255, 255, 0.2); transform: translateY(-1px); }
+
+.btn-add:hover {
+    background: rgba(255, 255, 255, 0.2); 
+    transform: translateY(-1px);
+}
 
 .btn-submit { 
     padding: 15px 20px; 
@@ -126,8 +169,12 @@ select option {
     text-shadow: 0 1px 2px rgba(0,0,0,0.3);
     transition: transform 0.2s;
 }
-.btn-submit:hover { transform: translateY(-2px); }
 
+.btn-submit:hover {
+    transform: translateY(-2px);
+}
+
+/* Remove Button Styling */
 .btn-remove {
     background: rgba(255, 59, 48, 0.3); 
     color: white;
@@ -144,10 +191,15 @@ select option {
     flex-shrink: 0; 
     box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
-.btn-remove:hover { background: rgba(255, 59, 48, 0.7); transform: scale(1.05); }
+
+.btn-remove:hover {
+    background: rgba(255, 59, 48, 0.7);
+    transform: scale(1.05);
+}
 
 hr { 
-    border: 0; height: 1px; 
+    border: 0;
+    height: 1px;
     background: linear-gradient(to right, transparent, rgba(255, 255, 255, 0.3), transparent);
     margin: 30px 0; 
 }
@@ -157,14 +209,51 @@ h2, h3, h4, p, label {
     letter-spacing: 0.5px;
 }
 
-/* Mobile */
+/* -------------------------------------- */
+/* MOBILE RESPONSIVENESS                  */
+/* -------------------------------------- */
 @media (max-width: 600px) {
-    body { margin: 10px; padding: 5px; }
-    .liquid-glass-box { padding: 20px; border-radius: 24px; }
-    .row { flex-wrap: wrap; gap: 8px; margin-bottom: 20px; }
-    .row input[type="text"] { flex: 1 1 100%; }
-    .row input[type="number"], .row select { flex: 1 1 40%; }
-    .btn-remove { flex: 0 0 40px; }
+    /* 1. Reduce the massive body margins */
+    body {
+        margin: 10px;
+        padding: 5px;
+    }
+
+    /* 2. Shrink the glass box padding so it fits the screen */
+    .liquid-glass-box {
+        padding: 20px;
+        border-radius: 24px; 
+    }
+
+    /* 3. Reduce the hidden background stretch */
+    .liquid-glass-box::before {
+        top: -20px; left: -20px; right: -20px; bottom: -20px; 
+    }
+
+    /* 4. Allow the rows to wrap onto multiple lines */
+    .row {
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 20px; /* Extra space between people */
+    }
+
+    /* 5. Force the Name inputs to take up the whole top line */
+    .row input[type="text"] {
+        flex: 1 1 100%;
+    }
+
+    /* 6. Make the Cost and Dropdowns share the bottom line */
+    .row input[type="number"], 
+    .row select {
+        flex: 1 1 40%;
+    }
+
+    /* 7. Keep the remove button perfectly square on the right */
+    .btn-remove {
+        flex: 0 0 40px; 
+    }
+
+    /* 8. Tweak font sizes for smaller screens */
     h2 { font-size: 22px; }
     h3 { font-size: 18px; }
 }
