@@ -221,7 +221,7 @@ h2, h3, h4, p, label {
     /* 1. Reduce the massive body margins */
     body {
         margin: 0;
-        padding: 5px;
+        padding: 15px;
     }
 
     /* 2. Shrink the glass box padding so it fits the screen */
