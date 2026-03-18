@@ -4,20 +4,20 @@ const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-// Load the background image (Required for WebGL Refraction)
-const textureLoader = new THREE.TextureLoader();
-textureLoader.setCrossOrigin('anonymous'); 
-const bgTexture = textureLoader.load('https://images.unsplash.com/photo-1559827291-72ee739d0d9a?q=80&w=2568');
+// 1. Set your Gradient Colors here (using the colors from your CSS!)
+const colorTop = new THREE.Color("rgb(16, 0, 31)");
+const colorBottom = new THREE.Color("rgb(47, 39, 54)");
 
 // The Core WebGL Refraction Shader
 const material = new THREE.ShaderMaterial({
     uniforms: {
-        uTexture: { value: bgTexture },
+        // Pass the colors to the GPU instead of an image texture
+        uColorTop: { value: colorTop },
+        uColorBottom: { value: colorBottom },
         uResolution: { value: new THREE.Vector2(window.innerWidth, window.innerHeight) },
-        uImageAspect: { value: 2568 / 1712 }, // Aspect ratio of the image above
         uGlassPos: { value: new THREE.Vector2(0, 0) },
         uGlassSize: { value: new THREE.Vector2(0, 0) },
-        uCornerRadius: { value: 32.0 } // Matches your CSS border-radius
+        uCornerRadius: { value: 32.0 } 
     },
     vertexShader: `
         varying vec2 vUv;
@@ -27,9 +27,9 @@ const material = new THREE.ShaderMaterial({
         }
     `,
     fragmentShader: `
-        uniform sampler2D uTexture;
+        uniform vec3 uColorTop;
+        uniform vec3 uColorBottom;
         uniform vec2 uResolution;
-        uniform float uImageAspect;
         uniform vec2 uGlassPos;
         uniform vec2 uGlassSize;
         uniform float uCornerRadius;
@@ -42,21 +42,14 @@ const material = new THREE.ShaderMaterial({
         }
 
         void main() {
-            // "background-size: cover" math for the shader
-            float canvasAspect = uResolution.x / uResolution.y;
-            vec2 bgUv = vUv;
-            if (canvasAspect > uImageAspect) {
-                bgUv.y = (bgUv.y - 0.5) * (uImageAspect / canvasAspect) + 0.5;
-            } else {
-                bgUv.x = (bgUv.x - 0.5) * (canvasAspect / uImageAspect) + 0.5;
-            }
-
             // Map UVs to the actual screen pixels
             vec2 pixelPos = vec2(vUv.x * uResolution.x, (1.0 - vUv.y) * uResolution.y);
             vec2 glassCenter = uGlassPos + uGlassSize * 0.5;
             
             float d = roundedBoxSDF(pixelPos - glassCenter, uGlassSize * 0.5, uCornerRadius);
-            vec4 color = texture2D(uTexture, bgUv);
+            
+            // Base coordinates for the gradient
+            vec2 bgUv = vUv;
 
             // If we are inside the HTML div boundaries... apply liquid physics!
             if (d < 0.0) {
@@ -72,12 +65,19 @@ const material = new THREE.ShaderMaterial({
                 float edgeThickness = 40.0; 
                 float lensCurve = smoothstep(-edgeThickness, 0.0, d);
                 
-                // Bend the background light
-                vec2 refractedUv = bgUv + normal * lensCurve * 0.08; 
-                color = texture2D(uTexture, refractedUv);
-                
+                // Bend the coordinates to create the refraction
+                bgUv += normal * lensCurve * 0.08; 
+            }
+            
+            // 2. MIX THE GRADIENT! 
+            // This mathematically blends the bottom color into the top color based on the screen height.
+            vec3 finalColor = mix(uColorBottom, uColorTop, bgUv.y);
+            vec4 color = vec4(finalColor, 1.0);
+
+            // Add the physical glass styling (frost and highlights)
+            if (d < 0.0) {
                 // Glass frosted tint
-                color.rgb += vec3(0.08);
+                color.rgb += vec3(0.05);
 
                 // Add physical shiny specular highlight to the inner curved edge
                 float highlight = smoothstep(-10.0, -3.0, d) * smoothstep(0.0, -3.0, d);
@@ -116,11 +116,7 @@ resize();
 // 60FPS Render Loop
 function animate() {
     requestAnimationFrame(animate);
-    
-    // We update bounds constantly so if you scroll, or if the box grows 
-    // taller from adding a new person, the glass refraction instantly adapts!
     updateGlassBounds(); 
-    
     renderer.render(scene, camera);
 }
 animate();
