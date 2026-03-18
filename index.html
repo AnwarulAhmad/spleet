@@ -5,12 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Anwar's Bill Splitter</title>
     <link rel="stylesheet" href="style.css">
-    
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 </head>
 <body>
 
-    <canvas id="webgl-canvas"></canvas>
+    <svg width="0" height="0" style="position: absolute; pointer-events: none;">
+        <filter id="liquid-glass" color-interpolation-filters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.004" numOctaves="2" seed="1" result="liquid" />
+            
+            <feDisplacementMap in="SourceGraphic" in2="liquid" scale="70" xChannelSelector="R" yChannelSelector="G" />
+        </filter>
+    </svg>
 
     <div class="liquid-glass-box">
         <h2>Anwar's Bill Splitter</h2>
@@ -69,11 +73,10 @@
 
             <button type="submit" class="btn-submit">Calculate Split</button>
         </form>
-
-        <div id="results-container"></div>
     </div>
 
+    <div id="results-container"></div>
+
     <script src="script.js"></script>
-    <script src="webgl-glass.js"></script>
 </body>
 </html>
