@@ -157,7 +157,7 @@ select option {
 .btn-submit { 
     padding: 15px 20px; 
     cursor: pointer; 
-    background: linear-gradient(135deg, rgba(40, 167, 69, 0.8), rgba(30, 126, 52, 0.9));
+    background: linear-gradient(135deg, rgba(40, 142, 167, 0.8), rgba(0, 129, 204, 0.9));
     color: white; 
     border: 1px solid rgba(255, 255, 255, 0.4); 
     font-size: 16px; 
