@@ -96,7 +96,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 <option value="¥" <?= $currency === '¥' ? 'selected' : '' ?>>JPY (¥)</option>
             </select>
         </div>
-
+<div class="glass-card">
+        <h1>Split Project</h1>
+        <p>PHP Server is running on localhost:8000</p>
+        <button style="background: white; border: none; padding: 10px 20px; border-radius: 5px;">
+            Get Started
+        </button>
+    </div>
         <hr>
 
         <h3>1. Who ordered what?</h3>
