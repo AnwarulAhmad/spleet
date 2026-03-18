@@ -4,9 +4,9 @@ const renderer = new THREE.WebGLRenderer({ canvas, alpha: false, antialias: true
 const scene = new THREE.Scene();
 const camera = new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
 
-// 1. Set your Gradient Colors here (using the colors from your CSS!)
-const colorTop = new THREE.Color("rgb(16, 0, 31)");
-const colorBottom = new THREE.Color("rgb(47, 39, 54)");
+// 1. Using higher contrast colors to make the refraction visible
+const colorTop = new THREE.Color("rgb(80, 40, 120)");    // Rich Purple
+const colorBottom = new THREE.Color("rgb(30, 150, 200)"); // Vibrant Blue
 
 // The Core WebGL Refraction Shader
 const material = new THREE.ShaderMaterial({
