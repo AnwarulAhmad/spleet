@@ -9,7 +9,8 @@ body {
     margin: 40px auto; 
     padding: 20px; 
     color: #fff;
-    
+    background: linear-gradient(rgb(0, 0, 0), rgb(35, 30, 39));
+
     /* A colorful, high-contrast background is REQUIRED to see clear glass properly */
     background-image: linear-gradient(rgb(0, 0, 0), rgb(35, 30, 39));
 }
@@ -256,4 +257,12 @@ h2, h3, h4, p, label {
     /* 8. Tweak font sizes for smaller screens */
     h2 { font-size: 22px; }
     h3 { font-size: 18px; }
+}
+/* Overwrites the browser's default white/blue autofill background */
+input:-webkit-autofill,
+input:-webkit-autofill:hover, 
+input:-webkit-autofill:focus {
+    -webkit-text-fill-color: white !important;
+    -webkit-box-shadow: 0 0 0px 1000px rgba(0, 0, 0, 0.3) inset !important;
+    transition: background-color 5000s ease-in-out 0s;
 }
