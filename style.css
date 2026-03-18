@@ -1,14 +1,31 @@
 * { box-sizing: border-box; }
 
+/* Update these specific parts of your style.css */
 body { 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
     max-width: 650px; 
     margin: 40px auto; 
     padding: 20px; 
     color: #fff;
-    /* Removed background-image! The WebGL canvas handles the background now. */
+    background: #000; /* WebGL will draw over this */
 }
 
+.liquid-glass-box {
+    position: relative;
+    border-radius: 32px; 
+    padding: 35px;
+    margin-bottom: 25px;
+    z-index: 1; 
+    background: transparent; /* MANDATORY: lets the WebGL refraction show through */
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-top: 1.5px solid rgba(255, 255, 255, 0.4);
+    box-shadow: 0 25px 45px rgba(0, 0, 0, 0.3);
+}
+
+/* REMOVE OR DISABLE THIS: It was only for the SVG version */
+.liquid-glass-box::before {
+    display: none;
+}
 /* --- THE FULLSCREEN WEBGL CANVAS --- */
 #webgl-canvas {
     position: fixed;
@@ -18,36 +35,6 @@ body {
     height: 100vh;
     z-index: -2;
     pointer-events: none; /* Lets you click through it to your form */
-}
-
-/* -------------------------------------- */
-/* LIQUID GLASS CONTAINER                 */
-/* -------------------------------------- */
-.liquid-glass-box {
-    position: relative;
-    border-radius: 32px; 
-    padding: 35px;
-    margin-bottom: 25px;
-    z-index: 1; 
-    
-    /* Make the HTML box completely transparent so the WebGL glass shows through! */
-    background: transparent;
-    
-    /* Specular Highlights (Borders acting as light reflections) */
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-top: 1.5px solid rgba(255, 255, 255, 0.5);
-    border-left: 1.5px solid rgba(255, 255, 255, 0.3);
-    
-    /* Shadows for Depth */
-    box-shadow: 
-        0 25px 45px rgba(0, 0, 0, 0.2), 
-        inset 0 0 20px rgba(255, 255, 255, 0.2), 
-        inset 2px 2px 5px rgba(255, 255, 255, 0.3);
-}
-
-/* Removed .liquid-glass-box::before completely! */
-.liquid-glass-box::before {
-    display: none;
 }
 
 /* -------------------------------------- */
