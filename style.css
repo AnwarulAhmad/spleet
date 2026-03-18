@@ -9,7 +9,9 @@ html{
 /* Base Page Styling with a beautiful background to refract */
 body { 
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; 
-    max-width: 650px; 
+    max-width: 100vw;
+    padding-left: 200px;
+    padding-right: 200px;
     margin: 40px auto; 
     padding: 20px; 
     color: #fff;
